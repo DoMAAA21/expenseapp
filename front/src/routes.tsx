@@ -1,5 +1,5 @@
 import { useRoutes, Navigate } from 'react-router-dom';
-import { LoginPage } from './domains/(auth)/login/page';
+import LoginPage from './domains/(auth)/login/page';
 
 
 export default function Routes() {  
