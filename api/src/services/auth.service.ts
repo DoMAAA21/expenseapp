@@ -1,5 +1,5 @@
-import { prisma } from "../lib/prisma";
-import { comparePassword, hashPassword } from "../utils/password";
+import { prisma } from "@/lib/prisma";
+import { comparePassword, hashPassword } from "@/utils/password";
 
 export type AuthUser = {
   id: string;

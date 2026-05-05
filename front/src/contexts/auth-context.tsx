@@ -6,9 +6,11 @@ import { toast } from 'sonner';
 import http from '@/lib/http';
 
 interface User {
-  id: number;
+  id: string;
   name: string;
   email: string;
+  isActive: boolean;
+  createdAt: string;
 }
 
 interface AuthContextType {
@@ -34,7 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     queryKey: ['auth', 'me'],
     queryFn: async () => {
       try {
-        const response = await http.get<User>('/auth/me');
+        const response = await http.get<{ data: User }>('/auth/me');
         return (response.data as any)?.data || response.data || null;
       } catch (error) {
         return null;
@@ -54,7 +56,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (userData) {
         toast.success('Login successful');
         navigate('/');
+        return;
       }
+
+      toast.error('Login failed. Missing user session.');
     },
     onError: (error: any) => {
       const errorMessage =
@@ -68,23 +73,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      const response = await http.post('/auth/logout');
-      return response.data;
+      await http.post('/auth/logout');
     },
     onSuccess: () => {
-      // Clear user data from cache
       queryClient.setQueryData(['auth', 'me'], null);
-      queryClient.clear();
       toast.success('Logged out successfully');
       navigate('/login');
     },
-    onError: (error: any) => {
-      // Even if logout fails, clear local state
+    onError: () => {
       queryClient.setQueryData(['auth', 'me'], null);
-      queryClient.clear();
-      const errorMessage =
-        error.response?.data?.message || error.message || 'Logout failed';
-      toast.error(errorMessage);
       navigate('/login');
     },
   });

@@ -5,8 +5,13 @@
     "moduleResolution": "NodeNext",
     "rootDir": "./src",
     "outDir": "./dist",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    },
     "types": ["node"],
     "strict": true,
+    "ignoreDeprecations": "6.0", 
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,

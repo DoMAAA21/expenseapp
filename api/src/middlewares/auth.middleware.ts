@@ -1,11 +1,13 @@
 import { type NextFunction, type Request, type Response } from "express";
-import { verifyAccessToken } from "../utils/jwt";
+import { verifyAccessToken } from "@/utils/jwt";
 
 export function requireAuth(req: Request, res: Response, next: NextFunction): void {
+  const cookieToken = req.cookies?.access_token as string | undefined;
   const authHeader = req.headers.authorization;
-  const token = authHeader?.startsWith("Bearer ")
+  const bearerToken = authHeader?.startsWith("Bearer ")
     ? authHeader.slice(7).trim()
-    : null;
+    : undefined;
+  const token = cookieToken ?? bearerToken;
 
   if (!token) {
     res.status(401).json({ message: "Missing access token" });

@@ -2,7 +2,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import express, { type Request, type Response } from "express";
-import { authRouter } from "./routes/auth.routes";
+import { authRouter } from "@/routes/auth.routes";
 
 dotenv.config();
 
@@ -15,8 +15,8 @@ const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS ?? "")
 
 app.use(
   cors({
+    credentials: true,
     origin(origin, callback) {
-      // Allow non-browser requests (curl, Postman, server-to-server).
       if (!origin) {
         return callback(null, true);
       }
