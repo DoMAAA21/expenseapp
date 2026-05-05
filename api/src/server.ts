@@ -1,7 +1,8 @@
 import cors from "cors";
+import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import express, { type Request, type Response } from "express";
-import { prisma } from "./lib/prisma";
+import { authRouter } from "./routes/auth.routes";
 
 dotenv.config();
 
@@ -28,6 +29,7 @@ app.use(
     },
   })
 );
+app.use(cookieParser());
 app.use(express.json());
 
 app.get("/health", (_req: Request, res: Response) => {
@@ -37,6 +39,8 @@ app.get("/health", (_req: Request, res: Response) => {
 app.get("/", (_req: Request, res: Response) => {
   res.status(200).json({ message: "TypeScript API is running." });
 });
+
+app.use("/api/auth", authRouter);
 
 app.listen(port, () => {
   console.log(`API server running at http://localhost:${port}`);

@@ -1,33 +1,30 @@
 const { PrismaClient } = require("@prisma/client");
-const crypto = require("node:crypto");
+const bcrypt = require("bcryptjs");
 
 const prisma = new PrismaClient();
 
 function hashPassword(password) {
-  return crypto.createHash("sha256").update(password).digest("hex");
+  return bcrypt.hashSync(password, 10);
 }
 
 async function main() {
   const users = [
     {
-      name: "Admin User",
-      email: "admin@financeapp.local",
-      passwordHash: hashPassword("Admin123!"),
-      role: "ADMIN",
+      name: "User One",
+      email: "user1@budgetly.local",
+      passwordHash: hashPassword("password"),
       isActive: true,
     },
     {
       name: "Demo User",
       email: "user@financeapp.local",
-      passwordHash: hashPassword("User123!"),
-      role: "USER",
+      passwordHash: hashPassword("password"),
       isActive: true,
     },
     {
       name: "Viewer User",
       email: "viewer@financeapp.local",
-      passwordHash: hashPassword("Viewer123!"),
-      role: "USER",
+      passwordHash: hashPassword("password"),
       isActive: true,
     },
   ];
@@ -38,7 +35,6 @@ async function main() {
       update: {
         name: user.name,
         passwordHash: user.passwordHash,
-        role: user.role,
         isActive: user.isActive,
       },
       create: user,
