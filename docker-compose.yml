@@ -25,8 +25,8 @@ services:
     ports:
       - "4000:4000"
     volumes:
-      - ./api:/app
-      - /app/node_modules
+      - ./api:/api
+      - /api/node_modules
     env_file:
       - ./api/.env
     environment:
