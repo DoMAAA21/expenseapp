@@ -1,6 +1,6 @@
 import { TransactionForm, type TransactionFormValues } from './transaction-form';
+import { getApiErrorMessage } from '@/lib/http-error';
 import http from '@/lib/http';
-import axios from 'axios';
 import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -29,15 +29,7 @@ export function AddTransaction({ onClose, defaultType }: AddTransactionProps) {
       );
       onClose();
     } catch (err: unknown) {
-      const message = axios.isAxiosError(err)
-        ? (typeof err.response?.data === 'object' &&
-            err.response.data !== null &&
-            'message' in err.response.data &&
-            typeof (err.response.data as { message?: string }).message === 'string'
-            ? (err.response.data as { message: string }).message
-            : err.message)
-        : 'Could not save transaction';
-      toast.error(message);
+      toast.error(getApiErrorMessage(err, 'Could not save transaction'));
     } finally {
       setSubmitting(false);
     }

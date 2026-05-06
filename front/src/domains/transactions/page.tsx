@@ -3,8 +3,8 @@ import { EditTransaction } from './_components/edit-transaction';
 import { TransactionMonthSummary } from './_components/transaction-month-summary';
 import { TransactionList, type TransactionRow } from './_components/transaction-list';
 import { showConfirmationPopup } from '@/components/confirmation-popup';
+import { getApiErrorMessage } from '@/lib/http-error';
 import http from '@/lib/http';
-import axios from 'axios';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo } from 'react';
 import { Modal } from '@/components/modal';
@@ -133,15 +133,7 @@ export default function TransactionsPage() {
       toast.success('Transaction deleted');
     },
     onError: (err: unknown) => {
-      const message = axios.isAxiosError(err)
-        ? typeof err.response?.data === 'object' &&
-            err.response.data !== null &&
-            'message' in err.response.data &&
-            typeof (err.response.data as { message?: string }).message === 'string'
-          ? (err.response.data as { message: string }).message
-          : err.message
-        : 'Could not delete transaction';
-      toast.error(message);
+      toast.error(getApiErrorMessage(err, 'Could not delete transaction'));
     },
   });
 
@@ -256,13 +248,7 @@ export default function TransactionsPage() {
           <div className="p-8 text-center text-sm text-muted-foreground">Loading transaction…</div>
         ) : editFetch.isError && !transactionFromList ? (
           <div className="p-6 text-sm text-destructive">
-            {axios.isAxiosError(editFetch.error) &&
-            typeof editFetch.error.response?.data === 'object' &&
-            editFetch.error.response.data !== null &&
-            'message' in editFetch.error.response.data &&
-            typeof (editFetch.error.response.data as { message?: string }).message === 'string'
-              ? (editFetch.error.response.data as { message: string }).message
-              : 'Could not load transaction'}
+            {getApiErrorMessage(editFetch.error, 'Could not load transaction')}
           </div>
         ) : transactionToEdit ? (
           <EditTransaction

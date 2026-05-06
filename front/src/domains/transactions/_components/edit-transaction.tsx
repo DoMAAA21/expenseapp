@@ -1,7 +1,7 @@
 import { TransactionForm, type TransactionFormValues } from './transaction-form';
 import type { TransactionRow } from './transaction-list';
+import { getApiErrorMessage } from '@/lib/http-error';
 import http from '@/lib/http';
-import axios from 'axios';
 import { useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -47,15 +47,7 @@ export function EditTransaction({ onClose, transaction }: EditTransactionProps) 
       toast.success('Transaction updated');
       onClose();
     } catch (err: unknown) {
-      const message = axios.isAxiosError(err)
-        ? typeof err.response?.data === 'object' &&
-            err.response.data !== null &&
-            'message' in err.response.data &&
-            typeof (err.response.data as { message?: string }).message === 'string'
-          ? (err.response.data as { message: string }).message
-          : err.message
-        : 'Could not update transaction';
-      toast.error(message);
+      toast.error(getApiErrorMessage(err, 'Could not update transaction'));
     } finally {
       setSubmitting(false);
     }
