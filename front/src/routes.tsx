@@ -1,60 +1,57 @@
+import MainLayout from '@/layouts/main-layout';
+import ProtectedRoute from '@/lib/protected-route';
+import LoginPage from '@/domains/(auth)/login/page';
+import DashboardPage from '@/domains/dashboard/page';
 import { useRoutes, Navigate } from 'react-router-dom';
-import type { ReactNode } from 'react';
-import LoginPage from './domains/(auth)/login/page';
-import { useAuth } from './contexts/auth-context';
 
-function HomePage() {
-    const { user, logout } = useAuth();
-
-    return (
-        <div className="flex min-h-screen items-center justify-center p-6">
-            <div className="w-full max-w-lg rounded-lg border p-6">
-                <h1 className="text-2xl font-bold">Budgetly</h1>
-                <p className="mt-2 text-muted-foreground">
-                    Signed in as {user?.email}
-                </p>
-                <button
-                    className="mt-4 rounded bg-black px-4 py-2 text-white"
-                    onClick={() => void logout()}
-                >
-                    Logout
-                </button>
-            </div>
-        </div>
-    );
+function PlaceholderPage({ title }: { title: string }) {
+  return (
+    <div className="rounded-lg border border-dashed border-border bg-muted/30 p-8 text-center">
+      <p className="font-medium text-foreground">{title}</p>
+      <p className="mt-2 text-sm text-muted-foreground">This section is coming soon.</p>
+    </div>
+  );
 }
 
-function ProtectedRoute({ children }: { children: ReactNode }) {
-    const { isAuthenticated, isLoading } = useAuth();
-
-    if (isLoading) {
-        return null;
-    }
-
-    if (!isAuthenticated) {
-        return <Navigate to="/login" replace />;
-    }
-
-    return <>{children}</>;
-}
-
-export default function Routes() {  
-    return useRoutes([
+export default function Routes() {
+  return useRoutes([
+    {
+      path: '/',
+      element: (
+        <ProtectedRoute>
+          <MainLayout />
+        </ProtectedRoute>
+      ),
+      children: [
         {
-            path: '/',
-            element: (
-                <ProtectedRoute>
-                    <HomePage />
-                </ProtectedRoute>
-            ),
+          index: true,
+          element: <DashboardPage />,
         },
         {
-            path: '/login',
-            element: <LoginPage />
+          path: 'transactions',
+          element: <PlaceholderPage title="Transactions" />,
         },
         {
-            path: '*',
-            element: <Navigate to="/" replace />,
+          path: 'budget',
+          element: <PlaceholderPage title="Budget" />,
         },
-    ])
+        {
+          path: 'reports',
+          element: <PlaceholderPage title="Reports" />,
+        },
+        {
+          path: 'settings',
+          element: <PlaceholderPage title="Settings" />,
+        },
+      ],
+    },
+    {
+      path: '/login',
+      element: <LoginPage />,
+    },
+    {
+      path: '*',
+      element: <Navigate to="/" replace />,
+    },
+  ]);
 }
