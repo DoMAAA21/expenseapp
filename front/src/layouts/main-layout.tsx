@@ -1,4 +1,4 @@
-import { QuickAddFab } from '@/components/quick-add';
+import { QuickAddFab } from '@/components/quick-add/quick-add-fab';
 import { useAuth } from '@/contexts/auth-context';
 import { sidebarNavItems } from '@/lib/sidebar-config';
 import { cn } from '@/lib/utils';

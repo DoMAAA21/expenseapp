@@ -2,6 +2,7 @@ import MainLayout from '@/layouts/main-layout';
 import ProtectedRoute from '@/lib/protected-route';
 import LoginPage from '@/domains/(auth)/login/page';
 import DashboardPage from '@/domains/dashboard/page';
+import TransactionsPage from '@/domains/transactions/page';
 import { useRoutes, Navigate } from 'react-router-dom';
 
 function PlaceholderPage({ title }: { title: string }) {
@@ -29,7 +30,7 @@ export default function Routes() {
         },
         {
           path: 'transactions',
-          element: <PlaceholderPage title="Transactions" />,
+          element: <TransactionsPage />,
         },
         {
           path: 'budget',

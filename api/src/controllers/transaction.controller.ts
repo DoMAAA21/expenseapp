@@ -26,6 +26,8 @@ const listQuerySchema = z.object({
   type: transactionTypeSchema.optional(),
   startDate: z.coerce.date().optional(),
   endDate: z.coerce.date().optional(),
+  page: z.coerce.number().int().min(1).optional(),
+  pageSize: z.coerce.number().int().min(1).max(100).optional(),
 });
 
 const summaryQuerySchema = z.object({
@@ -44,9 +46,17 @@ function routeParamId(req: Request): string {
 
 export async function listTransactions(req: Request, res: Response): Promise<void> {
   const userId = getAuthUser(req).id;
-  const filters = listQuerySchema.parse(req.query);
-  const data = await transactionService.list(userId, filters);
-  res.status(200).json({ data });
+  const query = listQuerySchema.parse(req.query);
+  const page = query.page ?? 1;
+  const pageSize = query.pageSize ?? 20;
+  const result = await transactionService.list(userId, {
+    type: query.type,
+    startDate: query.startDate,
+    endDate: query.endDate,
+    page,
+    pageSize,
+  });
+  res.status(200).json({ data: result.data, meta: result.meta });
 }
 
 export async function getTransaction(req: Request, res: Response): Promise<void> {

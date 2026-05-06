@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils';
 import { Plus, TrendingDown, TrendingUp } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 type QuickAddOption = {
   id: 'expense' | 'income';
@@ -15,6 +15,7 @@ const options: QuickAddOption[] = [
 ];
 
 export function QuickAddFab() {
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -43,15 +44,8 @@ export function QuickAddFab() {
 
   function handleOption(id: QuickAddOption['id']) {
     setOpen(false);
-    if (id === 'expense') {
-      toast('Add expense', {
-        description: 'Hook this up to your expense flow when ready.',
-      });
-      return;
-    }
-    toast('Add income', {
-      description: 'Hook this up to your income flow when ready.',
-    });
+    const param = id === 'expense' ? 'expense' : 'income';
+    navigate(`/transactions?add=${param}`);
   }
 
   return (

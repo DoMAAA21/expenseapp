@@ -18,6 +18,18 @@ export type ListFilters = {
   endDate?: Date;
 };
 
+export type TransactionListMeta = {
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+};
+
+export type PaginatedTransactions = {
+  data: TransactionDto[];
+  meta: TransactionListMeta;
+};
+
 function mapTransaction(row: {
   id: string;
   userId: string;
@@ -34,29 +46,57 @@ function mapTransaction(row: {
   };
 }
 
-export class TransactionService {
-  async list(userId: string, filters: ListFilters): Promise<TransactionDto[]> {
-    const where: Prisma.TransactionWhereInput = { userId };
+function buildTransactionWhere(
+  userId: string,
+  filters: ListFilters
+): Prisma.TransactionWhereInput {
+  const where: Prisma.TransactionWhereInput = { userId };
 
-    if (filters.type) {
-      where.type = filters.type;
+  if (filters.type) {
+    where.type = filters.type;
+  }
+  if (filters.startDate || filters.endDate) {
+    where.occurredAt = {};
+    if (filters.startDate) {
+      where.occurredAt.gte = filters.startDate;
     }
-    if (filters.startDate || filters.endDate) {
-      where.occurredAt = {};
-      if (filters.startDate) {
-        where.occurredAt.gte = filters.startDate;
-      }
-      if (filters.endDate) {
-        where.occurredAt.lte = filters.endDate;
-      }
+    if (filters.endDate) {
+      where.occurredAt.lte = filters.endDate;
     }
+  }
+
+  return where;
+}
+
+export class TransactionService {
+  async list(
+    userId: string,
+    filters: ListFilters & { page: number; pageSize: number }
+  ): Promise<PaginatedTransactions> {
+    const where = buildTransactionWhere(userId, filters);
+
+    const total = await prisma.transaction.count({ where });
+    const pageSize = filters.pageSize;
+    const totalPages = Math.max(1, Math.ceil(total / pageSize) || 1);
+    const page = Math.min(Math.max(1, filters.page), totalPages);
+    const skip = (page - 1) * pageSize;
 
     const rows = await prisma.transaction.findMany({
       where,
       orderBy: { occurredAt: "desc" },
+      skip,
+      take: pageSize,
     });
 
-    return rows.map(mapTransaction);
+    return {
+      data: rows.map(mapTransaction),
+      meta: {
+        total,
+        page,
+        pageSize,
+        totalPages,
+      },
+    };
   }
 
   async getById(userId: string, id: string): Promise<TransactionDto | null> {
