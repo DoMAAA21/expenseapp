@@ -12,7 +12,8 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "prisma db seed",
     "typecheck": "tsc --noEmit",
-    "test": "echo \"No tests configured yet\""
+    "test": "npm run test:run",
+    "test:run": "node --import tsx --test src/_test/*.test.ts"
   },
   "prisma": {
     "seed": "node prisma/seed.js"
@@ -42,6 +43,7 @@
     "prisma": "^6.19.3",
     "ts-node-dev": "^2.0.0",
     "tsconfig-paths": "^4.2.0",
+    "tsx": "^4.21.0",
     "typescript": "^6.0.3"
   }
 }
