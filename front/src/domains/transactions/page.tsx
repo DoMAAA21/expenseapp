@@ -5,6 +5,7 @@ import { TransactionList, type TransactionRow } from './_components/transaction-
 import { showConfirmationPopup } from '@/components/confirmation-popup';
 import { getApiErrorMessage } from '@/lib/http-error';
 import http from '@/lib/http';
+import { useMonthlySummary } from '@/hooks/use-monthly-summary';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo } from 'react';
 import { Modal } from '@/components/modal';
@@ -20,16 +21,6 @@ type ListResponse = {
     page: number;
     pageSize: number;
     totalPages: number;
-  };
-};
-
-type SummaryResponse = {
-  data: {
-    month: number;
-    year: number;
-    income: number;
-    expenses: number;
-    balance: number;
   };
 };
 
@@ -57,14 +48,6 @@ export default function TransactionsPage() {
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const pageFromUrl = useMemo(() => Math.max(1, Number.parseInt(searchParams.get('page') ?? '1', 10) || 1), [searchParams]);
-
-  const now = new Date();
-  const summaryMonth = now.getMonth() + 1;
-  const summaryYear = now.getFullYear();
-  const summaryPeriodLabel = new Date(summaryYear, summaryMonth - 1, 1).toLocaleString(undefined, {
-    month: 'long',
-    year: 'numeric',
-  });
 
   const editId = searchParams.get('edit');
 
@@ -98,15 +81,8 @@ export default function TransactionsPage() {
     data: monthSummary,
     isLoading: summaryLoading,
     error: summaryError,
-  } = useQuery({
-    queryKey: ['transactions', 'summary', summaryMonth, summaryYear],
-    queryFn: async () => {
-      const res = await http.get<SummaryResponse>('/transactions/summary', {
-        params: { month: summaryMonth, year: summaryYear },
-      });
-      return res.data.data;
-    },
-  });
+    periodLabel: summaryPeriodLabel,
+  } = useMonthlySummary();
 
   const rows = listPayload?.data ?? [];
   const transactionFromList = editId ? rows.find((r) => r.id === editId) : undefined;
