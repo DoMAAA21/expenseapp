@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useForm, FormProvider } from 'react-hook-form';
 import { useAuth } from '@/contexts/auth-context';
 import { Button } from '@/components/ui/button';
@@ -68,6 +68,13 @@ export default function LoginPage() {
             </Button>
           </form>
         </FormProvider>
+
+        <p className="text-center text-sm text-muted-foreground">
+          Don&apos;t have an account?{' '}
+          <Link to="/register" className="font-medium text-foreground underline underline-offset-4">
+            Create one
+          </Link>
+        </p>
       </div>
     </div>
   );

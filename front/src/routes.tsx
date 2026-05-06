@@ -1,6 +1,7 @@
 import MainLayout from '@/layouts/main-layout';
 import ProtectedRoute from '@/lib/protected-route';
 import LoginPage from '@/domains/(auth)/login/page';
+import RegisterPage from '@/domains/(auth)/register/page';
 import DashboardPage from '@/domains/dashboard/page';
 import TransactionsPage from '@/domains/transactions/page';
 import { useRoutes, Navigate } from 'react-router-dom';
@@ -49,6 +50,10 @@ export default function Routes() {
     {
       path: '/login',
       element: <LoginPage />,
+    },
+    {
+      path: '/register',
+      element: <RegisterPage />,
     },
     {
       path: '*',

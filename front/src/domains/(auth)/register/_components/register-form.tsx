@@ -13,11 +13,9 @@ export type RegisterFormData = {
 export function RegisterForm() {
   const {
     register,
-    watch,
+    getValues,
     formState: { errors },
   } = useFormContext<RegisterFormData>();
-
-  const password = watch('password');
 
   return (
     <div className="space-y-4">
@@ -105,7 +103,10 @@ export function RegisterForm() {
           placeholder="Re-enter your password"
           {...register('confirmPassword', {
             required: 'Please confirm your password',
-            validate: (value) => value === password || 'Passwords do not match',
+            validate: (value) => {
+              const password = getValues('password');
+              return value === password || 'Passwords do not match';
+            },
           })}
           aria-invalid={errors.confirmPassword ? 'true' : 'false'}
         />
