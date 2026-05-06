@@ -5,7 +5,9 @@ import {
   type DataTableColumn,
   type PaginationMeta,
 } from '@/components/data-table';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { Trash2 } from 'lucide-react';
 import { useMemo } from 'react';
 
 export type TransactionRow = {
@@ -23,6 +25,8 @@ type TransactionListProps = {
   isFetching: boolean;
   error: Error | null;
   onPageChange: (page: number) => void;
+  onDeleteTransaction: (id: string) => void;
+  deletingTransactionId: string | null;
 };
 
 const money = new Intl.NumberFormat(undefined, {
@@ -48,6 +52,8 @@ export function TransactionList({
   isFetching,
   error,
   onPageChange,
+  onDeleteTransaction,
+  deletingTransactionId,
 }: TransactionListProps) {
   const columns = useMemo<DataTableColumn<TransactionRow>[]>(
     () => [
@@ -94,8 +100,26 @@ export function TransactionList({
         className: 'max-w-[240px] truncate text-muted-foreground',
         cell: (tx) => tx.description ?? '—',
       },
+      {
+        id: 'actions',
+        header: <span className="sr-only">Actions</span>,
+        className: 'w-0 text-right',
+        cell: (tx) => (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            className="text-muted-foreground hover:text-destructive"
+            aria-label="Delete transaction"
+            disabled={deletingTransactionId !== null}
+            onClick={() => onDeleteTransaction(tx.id)}
+          >
+            <Trash2 className="size-3.5" />
+          </Button>
+        ),
+      },
     ],
-    [],
+    [onDeleteTransaction, deletingTransactionId],
   );
 
   if (error) {

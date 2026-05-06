@@ -1,10 +1,14 @@
 import { AddTransaction } from './_components/add-transaction';
+import { TransactionMonthSummary } from './_components/transaction-month-summary';
 import { TransactionList, type TransactionRow } from './_components/transaction-list';
+import { showConfirmationPopup } from '@/components/confirmation-popup';
 import http from '@/lib/http';
-import { useQuery } from '@tanstack/react-query';
+import axios from 'axios';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo } from 'react';
 import { Modal } from '@/components/modal';
 import { useSearchParams } from 'react-router-dom';
+import { toast } from 'sonner';
 
 const PAGE_SIZE = 10;
 
@@ -18,9 +22,28 @@ type ListResponse = {
   };
 };
 
+type SummaryResponse = {
+  data: {
+    month: number;
+    year: number;
+    income: number;
+    expenses: number;
+    balance: number;
+  };
+};
+
 export default function TransactionsPage() {
+  const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const pageFromUrl = useMemo(() => Math.max(1, Number.parseInt(searchParams.get('page') ?? '1', 10) || 1), [searchParams]);
+
+  const now = new Date();
+  const summaryMonth = now.getMonth() + 1;
+  const summaryYear = now.getFullYear();
+  const summaryPeriodLabel = new Date(summaryYear, summaryMonth - 1, 1).toLocaleString(undefined, {
+    month: 'long',
+    year: 'numeric',
+  });
 
   const { modalOpen, defaultType } = useMemo(() => {
     const add = searchParams.get('add');
@@ -47,6 +70,53 @@ export default function TransactionsPage() {
       return res.data;
     },
   });
+
+  const {
+    data: monthSummary,
+    isLoading: summaryLoading,
+    error: summaryError,
+  } = useQuery({
+    queryKey: ['transactions', 'summary', summaryMonth, summaryYear],
+    queryFn: async () => {
+      const res = await http.get<SummaryResponse>('/transactions/summary', {
+        params: { month: summaryMonth, year: summaryYear },
+      });
+      return res.data.data;
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await http.delete(`/transactions/${encodeURIComponent(id)}`);
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      toast.success('Transaction deleted');
+    },
+    onError: (err: unknown) => {
+      const message = axios.isAxiosError(err)
+        ? typeof err.response?.data === 'object' &&
+            err.response.data !== null &&
+            'message' in err.response.data &&
+            typeof (err.response.data as { message?: string }).message === 'string'
+          ? (err.response.data as { message: string }).message
+          : err.message
+        : 'Could not delete transaction';
+      toast.error(message);
+    },
+  });
+
+  function handleDeleteTransaction(id: string) {
+    void showConfirmationPopup({
+      title: 'Delete transaction',
+      message: 'Delete this transaction? This cannot be undone.',
+      confirmButton: 'Delete',
+      cancelButton: 'Cancel',
+      onSuccess: () => {
+        deleteMutation.mutate(id);
+      },
+    });
+  }
 
   useEffect(() => {
     const p = listPayload?.meta?.page;
@@ -82,6 +152,12 @@ export default function TransactionsPage() {
   const rows = listPayload?.data ?? [];
   const meta = listPayload?.meta ?? null;
   const listError = error instanceof Error ? error : error ? new Error('Failed to load transactions') : null;
+  const summaryErr =
+    summaryError instanceof Error
+      ? summaryError
+      : summaryError
+        ? new Error('Failed to load monthly totals')
+        : null;
 
   return (
     <div className="space-y-6">
@@ -92,6 +168,15 @@ export default function TransactionsPage() {
         </p>
       </div>
 
+      <TransactionMonthSummary
+        periodLabel={summaryPeriodLabel}
+        income={monthSummary?.income ?? 0}
+        expenses={monthSummary?.expenses ?? 0}
+        balance={monthSummary?.balance ?? 0}
+        isLoading={summaryLoading}
+        error={summaryErr}
+      />
+
       <TransactionList
         transactions={rows}
         meta={meta}
@@ -99,6 +184,10 @@ export default function TransactionsPage() {
         isFetching={isFetching && !!listPayload}
         error={listError}
         onPageChange={setPage}
+        onDeleteTransaction={handleDeleteTransaction}
+        deletingTransactionId={
+          deleteMutation.isPending ? deleteMutation.variables ?? null : null
+        }
       />
 
       <Modal isOpen={modalOpen} onClose={closeModal} align="center" size="md">
