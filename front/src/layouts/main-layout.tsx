@@ -1,3 +1,4 @@
+import { QuickAddFab } from '@/components/quick-add';
 import { useAuth } from '@/contexts/auth-context';
 import { sidebarNavItems } from '@/lib/sidebar-config';
 import { cn } from '@/lib/utils';
@@ -107,6 +108,8 @@ export default function MainLayout() {
           <Outlet />
         </main>
       </div>
+
+      <QuickAddFab />
     </div>
   );
 }
