@@ -1,5 +1,6 @@
-import { type NextFunction, type Request, type Response } from "express";
+import { AppError } from "@/utils/app-error";
 import { verifyAccessToken } from "@/utils/jwt";
+import { type NextFunction, type Request, type Response } from "express";
 
 export function requireAuth(req: Request, res: Response, next: NextFunction): void {
   const cookieToken = req.cookies?.access_token as string | undefined;
@@ -10,7 +11,7 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
   const token = cookieToken ?? bearerToken;
 
   if (!token) {
-    res.status(401).json({ message: "Missing access token" });
+    next(new AppError(401, "Missing access token"));
     return;
   }
 
@@ -21,7 +22,7 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
       email: payload.email,
     };
     next();
-  } catch (_error) {
-    res.status(401).json({ message: "Invalid or expired access token" });
+  } catch {
+    next(new AppError(401, "Invalid or expired access token"));
   }
 }

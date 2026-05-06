@@ -6,6 +6,8 @@ import {
   signRefreshToken,
   verifyRefreshToken,
 } from "@/utils/jwt";
+import { AppError } from "@/utils/app-error";
+import { getAuthUser } from "@/utils/request-user";
 
 const authService = new AuthService();
 
@@ -60,97 +62,73 @@ function clearAuthCookies(res: Response) {
 }
 
 export async function register(req: Request, res: Response): Promise<void> {
+  const payload = registerSchema.parse(req.body);
   try {
-    const payload = registerSchema.parse(req.body);
     const user = await authService.register(payload);
-
     setAuthCookies(res, user);
-
     res.status(201).json({
       message: "User registered successfully",
       data: { user },
     });
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      res.status(400).json({ message: "Invalid request body", issues: error.issues });
-      return;
+    if (error instanceof Error && error.message.includes("already registered")) {
+      throw new AppError(409, error.message);
     }
-
-    const message =
-      error instanceof Error ? error.message : "Failed to register user";
-    const statusCode = message.includes("already registered") ? 409 : 500;
-
-    res.status(statusCode).json({ message });
+    throw error;
   }
 }
 
 export async function login(req: Request, res: Response): Promise<void> {
+  const payload = loginSchema.parse(req.body);
   try {
-    const payload = loginSchema.parse(req.body);
     const user = await authService.login(payload);
-
     setAuthCookies(res, user);
-
     res.status(200).json({
       message: "Login successful",
       data: { user },
     });
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      res.status(400).json({ message: "Invalid request body", issues: error.issues });
-      return;
+    if (
+      error instanceof Error &&
+      (error.message.includes("Invalid email or password") ||
+        error.message.includes("inactive"))
+    ) {
+      throw new AppError(401, error.message);
     }
-
-    const message = error instanceof Error ? error.message : "Login failed";
-    const statusCode =
-      message.includes("Invalid email or password") || message.includes("inactive")
-        ? 401
-        : 500;
-
-    res.status(statusCode).json({ message });
+    throw error;
   }
 }
 
 export async function me(req: Request, res: Response): Promise<void> {
-  try {
-    if (!req.authUser) {
-      res.status(401).json({ message: "Unauthorized" });
-      return;
-    }
-
-    const user = await authService.getUserById(req.authUser.id);
-    if (!user) {
-      res.status(404).json({ message: "User not found" });
-      return;
-    }
-
-    res.status(200).json({ data: user });
-  } catch (_error) {
-    res.status(500).json({ message: "Failed to fetch user profile" });
+  const authUser = getAuthUser(req);
+  const user = await authService.getUserById(authUser.id);
+  if (!user) {
+    throw new AppError(404, "User not found");
   }
+  res.status(200).json({ data: user });
 }
 
 export async function refresh(req: Request, res: Response): Promise<void> {
-  try {
-    const refreshToken = req.cookies?.refresh_token as string | undefined;
-    if (!refreshToken) {
-      res.status(401).json({ message: "Missing refresh token" });
-      return;
-    }
+  const refreshToken = req.cookies?.refresh_token as string | undefined;
+  if (!refreshToken) {
+    throw new AppError(401, "Missing refresh token");
+  }
 
+  try {
     const payload = verifyRefreshToken(refreshToken);
     const user = await authService.getUserById(payload.sub);
     if (!user || !user.isActive) {
       clearAuthCookies(res);
-      res.status(401).json({ message: "Invalid refresh session" });
-      return;
+      throw new AppError(401, "Invalid refresh session");
     }
-
     setAuthCookies(res, user);
     res.status(200).json({ message: "Session refreshed" });
-  } catch (_error) {
+  } catch (error) {
     clearAuthCookies(res);
-    res.status(401).json({ message: "Invalid refresh token" });
+    if (error instanceof AppError) {
+      throw error;
+    }
+    throw new AppError(401, "Invalid refresh token");
   }
 }
 

@@ -2,7 +2,9 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import express, { type Request, type Response } from "express";
+import { errorHandler } from "@/middlewares/error-handler.middleware";
 import { authRouter } from "@/routes/auth.routes";
+import { transactionRouter } from "@/routes/transaction.routes";
 
 dotenv.config();
 
@@ -41,6 +43,9 @@ app.get("/", (_req: Request, res: Response) => {
 });
 
 app.use("/api/auth", authRouter);
+app.use("/api/transactions", transactionRouter);
+
+app.use(errorHandler);
 
 app.listen(port, () => {
   console.log(`API server running at http://localhost:${port}`);
