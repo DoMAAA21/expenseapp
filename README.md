@@ -243,14 +243,16 @@ This section maps implementation status against `TECHNICAL_REQUIREMENTS.md`.
 - **API integration**: ✅ Frontend integrates with self-built backend API (`/api/auth`, `/api/transactions`)
 - **Proper routing**: ✅ Public auth routes and protected app routes
 - **Proper code structure**: ✅ Domain-driven frontend + layered backend (routes/controllers/services)
-- **Unit tests**: ⚠️ Not implemented yet (`api` currently has no test suite)
+- **Unit tests**: ✅ Implemented in both `front` and `api`
+  - `front/src/_test/http-error.test.ts`
+  - `front/src/_test/use-recent-monthly-summaries.test.ts`
+  - `api/src/_test/app-error.test.ts`
+  - `api/src/_test/async-wrapper.test.ts`
+  - `api/src/_test/request-user.test.ts`
 
 ### Nice-to-haves
 
 - **Dockerized app**: ✅ Implemented with `docker-compose.yml`
-- **GraphQL**: ❌ Not implemented
-- **Push notifications**: ❌ Not implemented
-- **Page analytics**: ❌ Not implemented
 
 ---
 
@@ -272,6 +274,8 @@ cd api
 npm run dev
 npm run build
 npm run typecheck
+npm run test
+npm run test:run
 npx prisma generate
 npx prisma migrate dev
 npx prisma migrate deploy
@@ -285,4 +289,6 @@ cd front
 npm run dev
 npm run build
 npm run lint
+npm run test
+npm run test:run
 ```
