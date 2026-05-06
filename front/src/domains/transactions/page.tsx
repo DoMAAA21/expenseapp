@@ -1,4 +1,5 @@
 import { AddTransaction } from './_components/add-transaction';
+import { EditTransaction } from './_components/edit-transaction';
 import { TransactionMonthSummary } from './_components/transaction-month-summary';
 import { TransactionList, type TransactionRow } from './_components/transaction-list';
 import { showConfirmationPopup } from '@/components/confirmation-popup';
@@ -32,6 +33,26 @@ type SummaryResponse = {
   };
 };
 
+type OneTransactionResponse = {
+  data: {
+    id: string;
+    type: 'INCOME' | 'EXPENSE';
+    amount: number;
+    description: string | null;
+    occurredAt: string;
+  };
+};
+
+function mapOneToRow(d: OneTransactionResponse['data']): TransactionRow {
+  return {
+    id: d.id,
+    type: d.type,
+    amount: Number(d.amount),
+    description: d.description,
+    occurredAt: d.occurredAt,
+  };
+}
+
 export default function TransactionsPage() {
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -44,6 +65,8 @@ export default function TransactionsPage() {
     month: 'long',
     year: 'numeric',
   });
+
+  const editId = searchParams.get('edit');
 
   const { modalOpen, defaultType } = useMemo(() => {
     const add = searchParams.get('add');
@@ -84,6 +107,22 @@ export default function TransactionsPage() {
       return res.data.data;
     },
   });
+
+  const rows = listPayload?.data ?? [];
+  const transactionFromList = editId ? rows.find((r) => r.id === editId) : undefined;
+
+  const editFetch = useQuery({
+    queryKey: ['transactions', 'one', editId],
+    queryFn: async () => {
+      const res = await http.get<OneTransactionResponse>(
+        `/transactions/${encodeURIComponent(editId!)}`,
+      );
+      return mapOneToRow(res.data.data);
+    },
+    enabled: Boolean(editId && !transactionFromList),
+  });
+
+  const transactionToEdit = transactionFromList ?? editFetch.data ?? null;
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -139,6 +178,24 @@ export default function TransactionsPage() {
     setSearchParams(next, { replace: true });
   }
 
+  function closeEditModal() {
+    const next = new URLSearchParams(searchParams);
+    next.delete('edit');
+    setSearchParams(next, { replace: true });
+  }
+
+  function handleEditTransaction(id: string) {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete('add');
+        next.set('edit', id);
+        return next;
+      },
+      { replace: true },
+    );
+  }
+
   function setPage(nextPage: number) {
     const next = new URLSearchParams(searchParams);
     if (nextPage <= 1) {
@@ -149,7 +206,6 @@ export default function TransactionsPage() {
     setSearchParams(next, { replace: true });
   }
 
-  const rows = listPayload?.data ?? [];
   const meta = listPayload?.meta ?? null;
   const listError = error instanceof Error ? error : error ? new Error('Failed to load transactions') : null;
   const summaryErr =
@@ -184,14 +240,36 @@ export default function TransactionsPage() {
         isFetching={isFetching && !!listPayload}
         error={listError}
         onPageChange={setPage}
+        onEditTransaction={handleEditTransaction}
         onDeleteTransaction={handleDeleteTransaction}
         deletingTransactionId={
           deleteMutation.isPending ? deleteMutation.variables ?? null : null
         }
       />
 
-      <Modal isOpen={modalOpen} onClose={closeModal} align="center" size="md">
+      <Modal isOpen={modalOpen && !editId} onClose={closeModal} align="center" size="md">
         <AddTransaction onClose={closeModal} defaultType={defaultType} />
+      </Modal>
+
+      <Modal isOpen={Boolean(editId)} onClose={closeEditModal} align="center" size="md">
+        {editFetch.isLoading && !transactionFromList ? (
+          <div className="p-8 text-center text-sm text-muted-foreground">Loading transaction…</div>
+        ) : editFetch.isError && !transactionFromList ? (
+          <div className="p-6 text-sm text-destructive">
+            {axios.isAxiosError(editFetch.error) &&
+            typeof editFetch.error.response?.data === 'object' &&
+            editFetch.error.response.data !== null &&
+            'message' in editFetch.error.response.data &&
+            typeof (editFetch.error.response.data as { message?: string }).message === 'string'
+              ? (editFetch.error.response.data as { message: string }).message
+              : 'Could not load transaction'}
+          </div>
+        ) : transactionToEdit ? (
+          <EditTransaction
+            transaction={transactionToEdit}
+            onClose={closeEditModal}
+          />
+        ) : null}
       </Modal>
     </div>
   );

@@ -22,6 +22,11 @@ type TransactionFormFields = {
 
 type TransactionFormProps = {
   defaultType: 'INCOME' | 'EXPENSE';
+  initialValues?: Pick<
+    TransactionFormValues,
+    'type' | 'amount' | 'description' | 'occurredAt'
+  > | null;
+  submitLabel?: string;
   onSubmit: (values: TransactionFormValues) => Promise<void>;
   onCancel: () => void;
   isSubmitting?: boolean;
@@ -37,8 +42,34 @@ function toPayload(data: TransactionFormFields): TransactionFormValues {
   };
 }
 
+function amountToInputString(amount: number): string {
+  return Number.isFinite(amount) ? String(amount) : '';
+}
+
+function buildDefaultValues(
+  defaultType: 'INCOME' | 'EXPENSE',
+  initialValues: TransactionFormProps['initialValues'],
+): TransactionFormFields {
+  if (initialValues) {
+    return {
+      type: initialValues.type,
+      amount: amountToInputString(initialValues.amount),
+      description: initialValues.description ?? '',
+      occurredAt: toDatetimeLocalValue(new Date(initialValues.occurredAt)),
+    };
+  }
+  return {
+    type: defaultType,
+    amount: '',
+    description: '',
+    occurredAt: toDatetimeLocalValue(new Date()),
+  };
+}
+
 export function TransactionForm({
   defaultType,
+  initialValues = null,
+  submitLabel = 'Save',
   onSubmit,
   onCancel,
   isSubmitting = false,
@@ -48,21 +79,17 @@ export function TransactionForm({
     handleSubmit,
     watch,
     setValue,
+    reset,
     formState: { errors },
   } = useForm<TransactionFormFields>({
-    defaultValues: {
-      type: defaultType,
-      amount: '',
-      description: '',
-      occurredAt: toDatetimeLocalValue(new Date()),
-    },
+    defaultValues: buildDefaultValues(defaultType, initialValues),
   });
 
   const type = watch('type');
 
   useEffect(() => {
-    setValue('type', defaultType);
-  }, [defaultType, setValue]);
+    reset(buildDefaultValues(defaultType, initialValues));
+  }, [defaultType, initialValues, reset]);
 
   return (
     <form
@@ -157,7 +184,7 @@ export function TransactionForm({
           Cancel
         </Button>
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Saving…' : 'Save'}
+          {isSubmitting ? 'Saving…' : submitLabel}
         </Button>
       </div>
     </form>

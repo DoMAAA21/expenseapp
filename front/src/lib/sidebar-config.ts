@@ -1,10 +1,7 @@
 import type { LucideIcon } from 'lucide-react';
 import {
   LayoutDashboard,
-  ArrowLeftRight,
-  Wallet,
-  PieChart,
-  Settings,
+  ArrowLeftRight
 } from 'lucide-react';
 
 export interface SidebarNavItem {
@@ -23,20 +20,5 @@ export const sidebarNavItems: SidebarNavItem[] = [
     title: 'Transactions',
     href: '/transactions',
     icon: ArrowLeftRight,
-  },
-  {
-    title: 'Budget',
-    href: '/budget',
-    icon: Wallet,
-  },
-  {
-    title: 'Reports',
-    href: '/reports',
-    icon: PieChart,
-  },
-  {
-    title: 'Settings',
-    href: '/settings',
-    icon: Settings,
-  },
+  }
 ];

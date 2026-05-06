@@ -7,7 +7,7 @@ import {
 } from '@/components/data-table';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Trash2 } from 'lucide-react';
+import { Pencil, Trash2 } from 'lucide-react';
 import { useMemo } from 'react';
 
 export type TransactionRow = {
@@ -25,6 +25,7 @@ type TransactionListProps = {
   isFetching: boolean;
   error: Error | null;
   onPageChange: (page: number) => void;
+  onEditTransaction: (id: string) => void;
   onDeleteTransaction: (id: string) => void;
   deletingTransactionId: string | null;
 };
@@ -52,6 +53,7 @@ export function TransactionList({
   isFetching,
   error,
   onPageChange,
+  onEditTransaction,
   onDeleteTransaction,
   deletingTransactionId,
 }: TransactionListProps) {
@@ -105,21 +107,34 @@ export function TransactionList({
         header: <span className="sr-only">Actions</span>,
         className: 'w-0 text-right',
         cell: (tx) => (
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            className="text-muted-foreground hover:text-destructive"
-            aria-label="Delete transaction"
-            disabled={deletingTransactionId !== null}
-            onClick={() => onDeleteTransaction(tx.id)}
-          >
-            <Trash2 className="size-3.5" />
-          </Button>
+          <div className="flex items-center justify-end gap-0.5">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              className="text-muted-foreground hover:text-foreground"
+              aria-label="Edit transaction"
+              disabled={deletingTransactionId !== null}
+              onClick={() => onEditTransaction(tx.id)}
+            >
+              <Pencil className="size-3.5" />
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              className="text-muted-foreground hover:text-destructive"
+              aria-label="Delete transaction"
+              disabled={deletingTransactionId !== null}
+              onClick={() => onDeleteTransaction(tx.id)}
+            >
+              <Trash2 className="size-3.5" />
+            </Button>
+          </div>
         ),
       },
     ],
-    [onDeleteTransaction, deletingTransactionId],
+    [onEditTransaction, onDeleteTransaction, deletingTransactionId],
   );
 
   if (error) {
